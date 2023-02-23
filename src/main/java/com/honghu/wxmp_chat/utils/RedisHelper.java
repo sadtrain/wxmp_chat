@@ -12,13 +12,23 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class RedisUtils {
+@Component
+public class RedisHelper {
 
 
-    private RedisTemplate redisTemplate;
+    @Resource
+    private StringRedisTemplate redisTemplate;
 
-    public RedisUtils(StringRedisTemplate redisTemplate){
-        this.redisTemplate = redisTemplate;
+    public static final String THINKING_KEY_PREFIX = "thinking";
+    public static final String QUESTION_KEY_PREFIX = "question";
+    public static final String LAST_RESULT = "lastresult";
+    public void markThinking(String fromUser, String question) {
+        setEx(THINKING_KEY_PREFIX + fromUser, String.valueOf(System.currentTimeMillis()), 600, TimeUnit.SECONDS);
+        set(QUESTION_KEY_PREFIX + fromUser, question);
+    }
+
+    public String getLastQuestion(String fromUser) {
+        return get(QUESTION_KEY_PREFIX + fromUser);
     }
 
     public boolean hasKey(String key){
@@ -367,5 +377,17 @@ public class RedisUtils {
         List<String> result = redisTemplate.opsForValue().multiGet(keys);
         log.info("multiGet(...) => result -> {}", result);
         return result;
+    }
+
+    public void clearThinking(String fromUser) {
+        redisTemplate.delete(THINKING_KEY_PREFIX + fromUser);
+    }
+
+    public boolean isThinking(String userKey) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(THINKING_KEY_PREFIX + userKey));
+    }
+
+    public void setLastResult(String userKey,String result) {
+        set(LAST_RESULT + userKey, result);
     }
 }

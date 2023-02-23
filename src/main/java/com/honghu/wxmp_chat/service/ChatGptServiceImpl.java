@@ -6,12 +6,13 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.honghu.wxmp_chat.entity.MessageResponseBody;
 import com.honghu.wxmp_chat.entity.MessageSendBody;
 import com.honghu.wxmp_chat.utils.HttpUtil;
-import com.honghu.wxmp_chat.utils.RedisUtils;
+import com.honghu.wxmp_chat.utils.RedisHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ public class ChatGptServiceImpl implements ChatGptService {
     private final String url = "https://api.openai.com/v1/completions";
 
     @Resource
-    StringRedisTemplate stringRedisTemplate;
+    RedisHelper redisHelper;
 
     private final String human = "Human:";
     /**
@@ -47,14 +48,14 @@ public class ChatGptServiceImpl implements ChatGptService {
     public String reply(String messageContent, String userKey) {
         // 默认信息
         String message = "Human:你好\ntrain:你好\n";
-        RedisUtils redisUtils = new RedisUtils(stringRedisTemplate);
-        if (redisUtils.hasKey(userKey)) {
+        String response = "";
+        if (redisHelper.hasKey(userKey)) {
             // 如果存在key，拿出来
-            message = redisUtils.get(userKey);
+            message = redisHelper.get(userKey);
         }
         // 拼接字符,设置回去
         message = message + human + messageContent + "\n";
-        redisUtils.setEx(userKey, message, 60, TimeUnit.SECONDS);
+        redisHelper.setEx(userKey, message, 60, TimeUnit.SECONDS);
         // 调用接口获取数据
         JSONObject obj = getReplyFromGPT(message);
         MessageResponseBody messageResponseBody = JSONObject.toJavaObject(obj, MessageResponseBody.class);
@@ -64,14 +65,21 @@ public class ChatGptServiceImpl implements ChatGptService {
                 String replyText = messageResponseBody.getChoices().get(0).getText();
                 // 拼接字符,设置回去
                 new Thread(() -> {
-                    String msg = redisUtils.get(userKey);
+                    String msg = redisHelper.get(userKey);
                     msg = msg + Ai + replyText + "\n";
-                    redisUtils.setEx(userKey, msg, 60, TimeUnit.SECONDS);
+                    redisHelper.setEx(userKey, msg, 60, TimeUnit.SECONDS);
                 }).start();
-                return replyText.replace("train:", "");
+                response = replyText.replace("train:", "");
             }
         }
-        return "暂时不明白你说什么!";
+        if ("".equals(response)) {
+            response = "暂时不明白你说什么!";
+        }
+        if (redisHelper.isThinking(userKey)) {
+            redisHelper.setLastResult(userKey, response);
+            redisHelper.clearThinking(userKey);
+        }
+        return response;
     }
 
     private JSONObject getReplyFromGPT(String message) {

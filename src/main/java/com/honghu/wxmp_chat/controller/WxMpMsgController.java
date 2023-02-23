@@ -1,12 +1,13 @@
 package com.honghu.wxmp_chat.controller;
 
 import com.honghu.wxmp_chat.service.ChatGptServiceImpl;
+import com.honghu.wxmp_chat.utils.RedisHelper;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlMessage;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlOutTextMessage;
-import me.chanjar.weixin.mp.config.WxMpConfigStorage;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.concurrent.*;
 
 
 /**
@@ -31,6 +33,12 @@ public class WxMpMsgController {
 
     @Resource
     private ChatGptServiceImpl chatGptService;
+
+    @Resource
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+
+    @Resource
+    private RedisHelper redisHelper;
 
     /**
      * 消息校验，确定是微信发送的消息
@@ -83,16 +91,7 @@ public class WxMpMsgController {
             // 关注
             if (message.getEvent().equals("subscribe")) {
                 log.info("用户关注：{}", fromUser);
-                WxMpXmlOutTextMessage texts = WxMpXmlOutTextMessage
-                        .TEXT()
-                        .toUser(fromUser)
-                        .fromUser(touser)
-                        .content("感谢关注~~我是贴心的小橘，有问题尽管提问我好了！！\n例如，您可以发送”大象真的害怕老鼠吗“")
-                        .build();
-
-                String result = texts.toXml();
-
-                System.out.println("响应给用户的消息：" + result);
+                String result = generateTextResponse(fromUser, touser, "感谢关注~~我是贴心的小橘，有问题尽管提问我好了！！\n例如，您可以发送”大象真的害怕老鼠吗“");
 
                 return result;
             }
@@ -120,14 +119,36 @@ public class WxMpMsgController {
         }
         //文本消息
         if (messageType.equals("text")) {
-            WxMpXmlOutTextMessage texts = WxMpXmlOutTextMessage
-                    .TEXT()
-                    .toUser(fromUser)
-                    .fromUser(touser)
-                    .content( chatGptService.reply(text, fromUser))
-                    .build();
-            String result = texts.toXml();
-            System.out.println("响应给用户的消息：" + result);
+            if (redisHelper.hasKey(RedisHelper.THINKING_KEY_PREFIX + fromUser)){
+                return "我正在思考中，请稍后再问我吧";
+            }
+            if (redisHelper.hasKey(RedisHelper.LAST_RESULT + fromUser)){
+                String result = redisHelper.get(RedisHelper.LAST_RESULT + fromUser);
+                redisHelper.delKey(RedisHelper.LAST_RESULT + fromUser);
+                result = "您上次提问的问题是：" + redisHelper.getLastQuestion(fromUser) + "\n" + "我的回答如下：\n" + result;
+                return generateTextResponse(fromUser, touser, result);
+            }
+            FutureTask<String> task = new FutureTask<>(() -> {
+                try {
+                    return chatGptService.reply(text, fromUser);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return null;
+            });
+            threadPoolTaskExecutor.execute(task);
+            String content = "";
+            try {
+                content = task.get(3000,TimeUnit.SECONDS);
+            } catch (InterruptedException | ExecutionException e) {
+                content = "我好像出问题了，你再问我一次吧";
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                content = "这个问题比较复杂，我还在思考中，请等待5秒后发送任何消息，我会将这次的问题答案告诉你";
+                redisHelper.markThinking(fromUser,text);
+            }
+
+            String result = generateTextResponse(fromUser, touser, content);
             return result;
         }
         //图片消息
@@ -147,74 +168,52 @@ public class WxMpMsgController {
          * 语音消息
          */
         if (messageType.equals("voice")) {
-            WxMpXmlOutTextMessage texts = WxMpXmlOutTextMessage
-                    .TEXT()
-                    .toUser(fromUser)
-                    .fromUser(touser)
-                    .content("已接收到您发的语音信息")
-                    .build();
-            String result = texts.toXml();
-            System.out.println("响应给用户的消息：" + result);
+            String result = generateTextResponse(fromUser, touser, "已接收到您发的语音信息");
             return result;
         }
         /**
          * 视频
          */
         if (messageType.equals("video")) {
-            WxMpXmlOutTextMessage texts = WxMpXmlOutTextMessage
-                    .TEXT()
-                    .toUser(fromUser)
-                    .fromUser(touser)
-                    .content("已接收到您发的视频信息")
-                    .build();
-            String result = texts.toXml();
-            System.out.println("响应给用户的消息：" + result);
+            String result = generateTextResponse(fromUser, touser, "已接收到您发的视频信息");
             return result;
         }
         /**
          * 小视频
          */
         if (messageType.equals("shortvideo")) {
-            WxMpXmlOutTextMessage texts = WxMpXmlOutTextMessage
-                    .TEXT()
-                    .toUser(fromUser)
-                    .fromUser(touser)
-                    .content("已接收到您发的小视频信息")
-                    .build();
-            String result = texts.toXml();
-            System.out.println("响应给用户的消息：" + result);
+            String result = generateTextResponse(fromUser, touser, "已接收到您发的小视频信息");
             return result;
         }
         /**
          * 地理位置信息
          */
         if (messageType.equals("location")) {
-            WxMpXmlOutTextMessage texts = WxMpXmlOutTextMessage
-                    .TEXT()
-                    .toUser(fromUser)
-                    .fromUser(touser)
-                    .content("已接收到您发的地理位置信息")
-                    .build();
-            String result = texts.toXml();
-            System.out.println("响应给用户的消息：" + result);
+            String result = generateTextResponse(fromUser, touser, "已接收到您发的地理位置信息");
             return result;
         }
         /**
          * 链接信息
          */
         if (messageType.equals("link")) {
-            WxMpXmlOutTextMessage texts = WxMpXmlOutTextMessage
-                    .TEXT()
-                    .toUser(fromUser)
-                    .fromUser(touser)
-                    .content("已接收到您发的链接信息")
-                    .build();
-            String result = texts.toXml();
-            System.out.println("响应给用户的消息：" + result);
+            String result = generateTextResponse(fromUser, touser, "已接收到您发的链接信息");
             return result;
         }
         return null;
     }
+
+    private static String generateTextResponse(String fromUser, String touser, String content) {
+        WxMpXmlOutTextMessage texts = WxMpXmlOutTextMessage
+                .TEXT()
+                .toUser(fromUser)
+                .fromUser(touser)
+                .content(content)
+                .build();
+        String result = texts.toXml();
+        System.out.println("响应给用户的消息：" + result);
+        return result;
+    }
+
 
     @GetMapping("/getToken")
     public String getToken() throws WxErrorException {
