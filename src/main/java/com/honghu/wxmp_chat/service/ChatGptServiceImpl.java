@@ -49,7 +49,7 @@ public class ChatGptServiceImpl implements ChatGptService {
     @Override
     public String reply(String messageContent, String userKey) {
         // 默认信息
-        String message = "Human:你好\ntrain:你好\n";
+        String message = "Human:你好\n小橘:你好\n";
         String response = "";
         if (redisHelper.hasKey(userKey)) {
             // 如果存在key，拿出来
@@ -77,12 +77,12 @@ public class ChatGptServiceImpl implements ChatGptService {
         if ("".equals(response)) {
             response = "暂时不明白你说什么!";
         }
+        if (IllegalWorkUtil.containsIllegalWord(response)) {
+            response = "您提问的问题涉及敏感，暂时无法回答!";
+        }
         if (redisHelper.isThinking(userKey)) {
             redisHelper.setLastResult(userKey, response);
             redisHelper.clearThinking(userKey);
-        }
-        if (IllegalWorkUtil.containsIllegalWord(response)) {
-            response = "您提问的问题涉及敏感，暂时无法回答!";
         }
         return response;
     }

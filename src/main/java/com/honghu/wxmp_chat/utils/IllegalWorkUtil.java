@@ -33,6 +33,6 @@ public class IllegalWorkUtil {
     }
 
     public static void main(String[] args) {
-        System.out.println(containsIllegalWord("习近平"));
+        System.out.println(containsIllegalWord("水浒传是谁写的"));
     }
 }
