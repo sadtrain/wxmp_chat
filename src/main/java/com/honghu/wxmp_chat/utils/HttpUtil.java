@@ -4,6 +4,7 @@ import okhttp3.*;
 import okhttp3.Request.Builder;
 
 
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
@@ -13,7 +14,10 @@ import java.util.concurrent.TimeUnit;
  * @author honghu
  */
 public class HttpUtil {
-    static OkHttpClient client = new OkHttpClient();
+    static X509TrustManager manager = SSLSocketClientUtil.getX509TrustManager();
+    static OkHttpClient client = new OkHttpClient().newBuilder().
+            sslSocketFactory(SSLSocketClientUtil.getSocketFactory(manager),manager)
+            .hostnameVerifier(SSLSocketClientUtil.getHostnameVerifier()).build();
 
     /**
      * post请求xml入参

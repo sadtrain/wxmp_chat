@@ -1,6 +1,7 @@
 package com.honghu.wxmp_chat.controller;
 
 import com.honghu.wxmp_chat.service.ChatGptServiceImpl;
+import com.honghu.wxmp_chat.utils.IllegalWorkUtil;
 import com.honghu.wxmp_chat.utils.RedisHelper;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
@@ -119,8 +120,11 @@ public class WxMpMsgController {
         }
         //文本消息
         if (messageType.equals("text")) {
+            if (IllegalWorkUtil.containsIllegalWord(text)){
+                return generateTextResponse(fromUser, touser, "您的提问中包含敏感词汇，请重新提问");
+            }
             if (redisHelper.hasKey(RedisHelper.THINKING_KEY_PREFIX + fromUser)){
-                return "我正在思考中，请稍后再问我吧";
+                return generateTextResponse(fromUser, touser, "我正在思考中，请稍等两秒再向我提问吧");
             }
             if (redisHelper.hasKey(RedisHelper.LAST_RESULT + fromUser)){
                 String result = redisHelper.get(RedisHelper.LAST_RESULT + fromUser);

@@ -6,6 +6,7 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.honghu.wxmp_chat.entity.MessageResponseBody;
 import com.honghu.wxmp_chat.entity.MessageSendBody;
 import com.honghu.wxmp_chat.utils.HttpUtil;
+import com.honghu.wxmp_chat.utils.IllegalWorkUtil;
 import com.honghu.wxmp_chat.utils.RedisHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import toolgood.words.IllegalWordsSearch;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -42,7 +44,7 @@ public class ChatGptServiceImpl implements ChatGptService {
     /**
      * 定义ai的名字
      */
-    private final String Ai = "小小鹏:";
+    private final String Ai = "小橘:";
 
     @Override
     public String reply(String messageContent, String userKey) {
@@ -78,6 +80,9 @@ public class ChatGptServiceImpl implements ChatGptService {
         if (redisHelper.isThinking(userKey)) {
             redisHelper.setLastResult(userKey, response);
             redisHelper.clearThinking(userKey);
+        }
+        if (IllegalWorkUtil.containsIllegalWord(response)) {
+            response = "您提问的问题涉及敏感，暂时无法回答!";
         }
         return response;
     }
