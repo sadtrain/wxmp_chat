@@ -139,7 +139,7 @@ public class WxMpMsgController {
             threadPoolTaskExecutor.execute(task);
             String content = "";
             try {
-                content = task.get(3000,TimeUnit.SECONDS);
+                content = task.get(4200,TimeUnit.MILLISECONDS);
             } catch (InterruptedException | ExecutionException e) {
                 content = "我好像出问题了，你再问我一次吧";
                 e.printStackTrace();

@@ -1,7 +1,6 @@
 package com.honghu.wxmp_chat.utils;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +16,7 @@ public class RedisHelper {
 
 
     @Resource
-    private StringRedisTemplate redisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
 
     public static final String THINKING_KEY_PREFIX = "thinking";
     public static final String QUESTION_KEY_PREFIX = "question";
@@ -32,11 +31,11 @@ public class RedisHelper {
     }
 
     public boolean hasKey(String key){
-        return redisTemplate.hasKey(key);
+        return stringRedisTemplate.hasKey(key);
     }
 
     public boolean delKey(String key){
-        return redisTemplate.delete(key);
+        return stringRedisTemplate.delete(key);
     }
     /**
      * 设置key-value
@@ -49,7 +48,7 @@ public class RedisHelper {
      */
     public  void set(String key, String value) {
         log.info("set(...) => key -> {}, value -> {}", key, value);
-        redisTemplate.opsForValue().set(key, value);
+        stringRedisTemplate.opsForValue().set(key, value);
     }
 
     /**
@@ -74,7 +73,7 @@ public class RedisHelper {
      */
     public  boolean setBit(String key, long offset, boolean value) {
         log.info("setBit(...) => key -> {}, offset -> {}, value -> {}", key, offset, value);
-        Boolean result = redisTemplate.opsForValue().setBit(key, offset, value);
+        Boolean result = stringRedisTemplate.opsForValue().setBit(key, offset, value);
         log.info("setBit(...) => result -> {}", result);
         if (result == null) {
             throw new RuntimeException("setBit error");
@@ -96,7 +95,7 @@ public class RedisHelper {
     public  void setEx(String key, String value, long timeout, TimeUnit unit) {
         log.info("setEx(...) => key -> {}, value -> {}, timeout -> {}, unit -> {}",
                 key, value, timeout, unit);
-        redisTemplate.opsForValue().set(key, value, timeout, unit);
+        stringRedisTemplate.opsForValue().set(key, value, timeout, unit);
     }
 
     /**
@@ -110,7 +109,7 @@ public class RedisHelper {
      */
     public  boolean setIfAbsent(String key, String value) {
         log.info("setIfAbsent(...) => key -> {}, value -> {}", key, value);
-        Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value);
+        Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(key, value);
         log.info("setIfAbsent(...) => result -> {}", result);
         if (result == null) {
             throw new RuntimeException("setIfAbsent error");
@@ -131,7 +130,7 @@ public class RedisHelper {
      */
     public  boolean setIfAbsent(String key, String value, long timeout, TimeUnit unit) {
         log.info("setIfAbsent(...) => key -> {}, value -> {}, key -> {}, value -> {}", key, value, timeout, unit);
-        Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
+        Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
         log.info("setIfAbsent(...) => result -> {}", result);
         if (result == null) {
             throw new RuntimeException("setIfAbsent value值 error");
@@ -161,7 +160,7 @@ public class RedisHelper {
      */
     public  void setRange(String key, String replaceValue, long offset) {
         log.info("setRange(...) => key -> {}, replaceValue -> {}, offset -> {}", key, replaceValue, offset);
-        redisTemplate.opsForValue().set(key, replaceValue, offset);
+        stringRedisTemplate.opsForValue().set(key, replaceValue, offset);
     }
 
     /**
@@ -176,7 +175,7 @@ public class RedisHelper {
      */
     public  long size(String key) {
         log.info("size(...) => key -> {}", key);
-        Long result = redisTemplate.opsForValue().size(key);
+        Long result = stringRedisTemplate.opsForValue().size(key);
         log.info("size(...) => result -> {}", result);
         if (result == null) {
             throw new RuntimeException("size error");
@@ -194,7 +193,7 @@ public class RedisHelper {
      */
     public  void multiSet(Map<String, String> maps) {
         log.info("multiSet(...) => maps -> {}", maps);
-        redisTemplate.opsForValue().multiSet(maps);
+        stringRedisTemplate.opsForValue().multiSet(maps);
     }
 
 
@@ -212,7 +211,7 @@ public class RedisHelper {
      */
     public  long incrBy(String key, long increment) {
         log.info("incrBy(...) => key -> {}, increment -> {}", key, increment);
-        Long result = redisTemplate.opsForValue().increment(key, increment);
+        Long result = stringRedisTemplate.opsForValue().increment(key, increment);
         log.info("incrBy(...) => result -> {}", result);
         if (result == null) {
             throw new RuntimeException("key对应的value值不支持增/减操作时");
@@ -228,7 +227,7 @@ public class RedisHelper {
      */
     public  long incr(String key) {
         log.info("incrBy(...) => key -> {}, increment -> {}", key);
-        Long result = redisTemplate.opsForValue().increment(key);
+        Long result = stringRedisTemplate.opsForValue().increment(key);
         log.info("incrBy(...) => result -> {}", result);
         if (result == null) {
             throw new RuntimeException("key对应的value值不支持增/减操作时");
@@ -255,7 +254,7 @@ public class RedisHelper {
      */
     public  double incrByFloat(String key, double increment) {
         log.info("incrByFloat(...) => key -> {}, increment -> {}", key, increment);
-        Double result = redisTemplate.opsForValue().increment(key, increment);
+        Double result = stringRedisTemplate.opsForValue().increment(key, increment);
         log.info("incrByFloat(...) => result -> {}", result);
         if (result == null) {
             throw new RuntimeException("key对应的value值不支持增/减操作时");
@@ -275,7 +274,7 @@ public class RedisHelper {
      */
     public  int append(String key, String value) {
         log.info("append(...) => key -> {}, value -> {}", key, value);
-        Integer result = redisTemplate.opsForValue().append(key, value);
+        Integer result = stringRedisTemplate.opsForValue().append(key, value);
         log.info("append(...) => result -> {}", result);
         if (result == null) {
             throw new RuntimeException("append value值 error");
@@ -293,9 +292,9 @@ public class RedisHelper {
      */
     public  String get(String key) {
         log.info("get(...) => key -> {}", key);
-            Boolean hasValue = redisTemplate.hasKey(key);
+            Boolean hasValue = stringRedisTemplate.hasKey(key);
         if (hasValue) {
-            String result = (String)redisTemplate.opsForValue().get(key);
+            String result = (String) stringRedisTemplate.opsForValue().get(key);
             log.info("get(...) => result -> {} ", result);
             return result;
         }
@@ -316,7 +315,7 @@ public class RedisHelper {
      */
     public  String getRange(String key, long start, long end) {
         log.info("getRange(...) => kry -> {}", key);
-        String result = redisTemplate.opsForValue().get(key, start, end);
+        String result = stringRedisTemplate.opsForValue().get(key, start, end);
         log.info("getRange(...) => result -> {} ", result);
         return result;
     }
@@ -333,7 +332,7 @@ public class RedisHelper {
      */
     public  String getAndSet(String key, String newValue) {
         log.info("getAndSet(...) => key -> {}, value -> {}", key, newValue);
-        String oldValue = (String)redisTemplate.opsForValue().getAndSet(key, newValue);
+        String oldValue = (String) stringRedisTemplate.opsForValue().getAndSet(key, newValue);
         log.info("getAndSet(...) => oldValue -> {}", oldValue);
         return oldValue;
     }
@@ -355,7 +354,7 @@ public class RedisHelper {
      */
     public  boolean getBit(String key, long offset) {
         log.info("getBit(...) => key -> {}, offset -> {}", key, offset);
-        Boolean result = redisTemplate.opsForValue().getBit(key, offset);
+        Boolean result = stringRedisTemplate.opsForValue().getBit(key, offset);
         log.info("getBit(...) => result -> {}", result);
         if (result == null) {
             throw new RuntimeException("getBit error");
@@ -374,17 +373,17 @@ public class RedisHelper {
      */
     public  List<String> multiGet(Collection<String> keys) {
         log.info("multiGet(...) => keys -> {}", keys);
-        List<String> result = redisTemplate.opsForValue().multiGet(keys);
+        List<String> result = stringRedisTemplate.opsForValue().multiGet(keys);
         log.info("multiGet(...) => result -> {}", result);
         return result;
     }
 
     public void clearThinking(String fromUser) {
-        redisTemplate.delete(THINKING_KEY_PREFIX + fromUser);
+        stringRedisTemplate.delete(THINKING_KEY_PREFIX + fromUser);
     }
 
     public boolean isThinking(String userKey) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(THINKING_KEY_PREFIX + userKey));
+        return Boolean.TRUE.equals(stringRedisTemplate.hasKey(THINKING_KEY_PREFIX + userKey));
     }
 
     public void setLastResult(String userKey,String result) {
