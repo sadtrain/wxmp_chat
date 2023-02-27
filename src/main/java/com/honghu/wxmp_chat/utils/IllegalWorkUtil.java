@@ -26,6 +26,7 @@ public class IllegalWorkUtil {
             reader.lines().forEach(keywords::add);
         }
         search.SetKeywords(new ArrayList<>(keywords));
+        search.SetSkipWords("的吗");
     }
 
     public static boolean containsIllegalWord(String response) {
@@ -33,6 +34,6 @@ public class IllegalWorkUtil {
     }
 
     public static void main(String[] args) {
-        System.out.println(containsIllegalWord("水浒传是谁写的"));
+        System.out.println(containsIllegalWord("有什么可以帮到你的吗"));
     }
 }
