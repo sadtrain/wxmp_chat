@@ -71,7 +71,7 @@ public class ChatGptServiceImpl implements ChatGptService {
                     msg = msg + Ai + replyText + "\n";
                     redisHelper.setEx(userKey, msg, 60, TimeUnit.SECONDS);
                 }).start();
-                response = replyText.replace("train:", "");
+                response = replyText.replace("小橘:", "");
             }
         }
         if ("".equals(response)) {
