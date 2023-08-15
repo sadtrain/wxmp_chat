@@ -55,6 +55,11 @@
             <artifactId>toolgood-words</artifactId>
             <version>3.1.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.asleepyfish</groupId>
+            <artifactId>chatgpt</artifactId>
+            <version>1.0.7</version>
+        </dependency>
     </dependencies>
 
     <build>

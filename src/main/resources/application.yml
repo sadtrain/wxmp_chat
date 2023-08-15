@@ -23,3 +23,9 @@ wx:
     secret: 86ae29528218bf738ed7a8b3505ed68e
     token: sadtrain
     aes-key: SPgrgrG01GKu5D5kYW3bxy0ylJo5sczcYi0rL3elAyT
+
+chatgpt:
+  token: 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
+  proxy-host: 127.0.0.1
+  proxy-port: 80
+  session-expiration-time: 30

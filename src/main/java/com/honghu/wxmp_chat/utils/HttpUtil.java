@@ -1,5 +1,10 @@
 package com.honghu.wxmp_chat.utils;
 
+import com.alibaba.fastjson.JSONObject;
+import com.theokanning.openai.completion.chat.ChatCompletionChoice;
+import com.theokanning.openai.completion.chat.ChatCompletionRequest;
+import com.theokanning.openai.completion.chat.ChatMessage;
+import io.github.asleepyfish.util.OpenAiUtils;
 import okhttp3.*;
 import okhttp3.Request.Builder;
 
@@ -7,6 +12,7 @@ import okhttp3.Request.Builder;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +25,10 @@ public class HttpUtil {
             sslSocketFactory(SSLSocketClientUtil.getSocketFactory(manager),manager)
             .hostnameVerifier(SSLSocketClientUtil.getHostnameVerifier()).build();
 
+    public static String callOpenApi(String request,String user){
+        List<String> chatCompletion = OpenAiUtils.createChatCompletion(request, user);
+        return chatCompletion.get(0);
+    }
     /**
      * post请求xml入参
      *

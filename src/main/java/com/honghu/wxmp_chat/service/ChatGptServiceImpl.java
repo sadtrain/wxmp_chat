@@ -51,29 +51,30 @@ public class ChatGptServiceImpl implements ChatGptService {
         // 默认信息
         String message = "Human:你好\n小橘:你好\n";
         String response = "";
-        if (redisHelper.hasKey(userKey)) {
-            // 如果存在key，拿出来
-            message = redisHelper.get(userKey);
-        }
-        // 拼接字符,设置回去
-        message = message + human + messageContent + "\n";
-        redisHelper.setEx(userKey, message, 60, TimeUnit.SECONDS);
+//        if (redisHelper.hasKey(userKey)) {
+//            // 如果存在key，拿出来
+//            message = redisHelper.get(userKey);
+//        }
+//        // 拼接字符,设置回去
+//        message = message + human + messageContent + "\n";
+//        redisHelper.setEx(userKey, message, 60, TimeUnit.SECONDS);
         // 调用接口获取数据
-        JSONObject obj = getReplyFromGPT(message);
-        MessageResponseBody messageResponseBody = JSONObject.toJavaObject(obj, MessageResponseBody.class);
-        // 存储对话内容，让机器人更加智能
-        if (messageResponseBody != null) {
-            if (!CollectionUtils.isEmpty(messageResponseBody.getChoices())) {
-                String replyText = messageResponseBody.getChoices().get(0).getText();
-                // 拼接字符,设置回去
-                new Thread(() -> {
-                    String msg = redisHelper.get(userKey);
-                    msg = msg + Ai + replyText + "\n";
-                    redisHelper.setEx(userKey, msg, 60, TimeUnit.SECONDS);
-                }).start();
-                response = replyText.replace("小橘:", "");
-            }
-        }
+        response = HttpUtil.callOpenApi(messageContent, userKey);
+//        JSONObject obj = getReplyFromGPT(message);
+//        MessageResponseBody messageResponseBody = JSONObject.toJavaObject(obj, MessageResponseBody.class);
+//        // 存储对话内容，让机器人更加智能
+//        if (messageResponseBody != null) {
+//            if (!CollectionUtils.isEmpty(messageResponseBody.getChoices())) {
+//                String replyText = messageResponseBody.getChoices().get(0).getText();
+//                // 拼接字符,设置回去
+//                new Thread(() -> {
+//                    String msg = redisHelper.get(userKey);
+//                    msg = msg + Ai + replyText + "\n";
+//                    redisHelper.setEx(userKey, msg, 60, TimeUnit.SECONDS);
+//                }).start();
+//                response = replyText.replace("小橘:", "");
+//            }
+//        }
         if ("".equals(response)) {
             response = "暂时不明白你说什么!";
         }
